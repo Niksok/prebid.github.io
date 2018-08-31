@@ -17,16 +17,74 @@ nav_section: download
 
 <script>
 
+  getVersionList();
+
 $(function(){
   $('#myModal').on('show.bs.modal', function (e) {
     var form_data = get_form_data();
-    if(form_data.bidders.length < 1){
+    if(form_data.modules.length < 1){
       alert('Please select at least 1 bidder');
       return e.preventDefault() // stops modal from being shown
     }
     return;
   });
+
+  $( ".selectpicker" ).change(function() {
+    if(this.value.match(/1\.\d+\.\d+/i)) {
+      $('.adapters .col-md-4').hide();
+      $('.prebid_1_0').show();
+    }
+    else{
+       $('.adapters .col-md-4').show();
+    }
+  });
+
+  //default to 1.x adapters:
+  $('.adapters .col-md-4').hide();
+  $('.prebid_1_0').show();
 });
+
+function getVersionList() {
+  $.ajax({
+      type: "GET",
+      url: "http://js-download.prebid.org/versions",
+  })
+  .success(function(data) {
+    try{
+      data = JSON.parse(data);
+      var versions = data.versions;
+      if(!versions || versions.length === 0) {
+        showError();
+        return;
+      }
+      versions.forEach(function(version, index){
+        if(index === 0) {
+          $('.selectpicker').append('<option value="'+version+'">'+version+' - latest </option>');
+        }
+        else{
+          if(version.match(/1\.\d+\.\d+/i)){
+            $('.selectpicker').append('<option value="'+version+'">'+version+'</option>');
+          }
+          else{
+            $('.selectpicker').append('<option value="'+version+'">'+version+' - deprecating on September 27, 2018</option>');
+          }
+        }
+      });
+    }
+    catch(e) {
+      console.log(e);
+      showError();
+    }
+
+  })
+  .fail(function(e) {
+    console.log(e);
+    showError();
+  });
+  function showError(){
+     $('.selectpicker').append('<option value="error">Error generating version list. Please try again later</option>');
+  }
+}
 
 function submit_download() {
     var form_data = get_form_data();
@@ -41,20 +99,36 @@ function submit_download() {
     alertStatus.addClass('hide');
 
     $('#download-button').html('<i class="glyphicon glyphicon-send"></i> Sending Request...').addClass('disabled');
-    alertStatus.html('Request sent! Please hang tight, this might take a few minutes.');
+    alertStatus.html('Request sent! This should only take a few moments!');
     alertStatus.removeClass('hide');
     $.ajax({
         type: "POST",
-        url: "http://client-test.devnxs.net/prebid",
+        url: "http://js-download.prebid.org/download",
         //dataType: 'json',
         data: form_data
     })
-    .done(function() {
+    .success(function(data, textStatus, jqXHR) {
       var buttn = $('#download-button');
       //buttn.addClass('btn-success');
-      buttn.html('<i class="glyphicon glyphicon-ok"></i> Email Sent!');
-      console.log('Succeeded!');
+      buttn.html('<i class="glyphicon glyphicon-ok"></i> Prebid.js file successfully generated!');
       alertStatus.addClass('hide');
+      // Try to find out the filename from the content disposition `filename` value
+      var filename = "prebid" + form_data['version'] + ".js";
+      // this doens't work in our current jquery version.
+      var disposition = jqXHR.getResponseHeader('Content-Disposition');
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+          var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          var matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+      }
+      // The actual download
+      var blob = new Blob([data], { type: 'text/javascript' });
+      var link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     })
     .fail(function(e) {
       errorO = e;
@@ -62,21 +136,20 @@ function submit_download() {
       var buttn = $('#download-button');
       buttn.html('<i class="glyphicon glyphicon-envelope"></i> Receive Prebid.js');
       buttn.removeClass('disabled');
-      alert('Ran into an issue.'); // + e.responseText
+      alert('Ran into an issue.');
     });
-
-    newDownload(form_data['email'], form_data['company'], form_data['bidders']);
 }
 
 function get_form_data() {
     var bidders = [];
     var analytics = [];
+    var version = $('.selectpicker').val();
 
     var bidder_check_boxes = $('.bidder-check-box');
     for (var i = 0; i < bidder_check_boxes.length; i++) {
         var box = bidder_check_boxes[i];
         if (box.checked) {
-            bidders.push(box.getAttribute('bidderCode'));
+            bidders.push(box.getAttribute('moduleCode'));
         }
     }
 
@@ -84,15 +157,15 @@ function get_form_data() {
     for (var i = 0; i < analytics_check_boxes.length; i++) {
         var box = analytics_check_boxes[i];
         if (box.checked) {
-            analytics.push(box.getAttribute('analyticscode'));
+            analytics.push(box.getAttribute('analyticscode') + 'AnalyticsAdapter');
         }
     }
 
     var form_data = {};
     form_data['email'] = $('#input-email').val();
     form_data['company'] = $('#input-company').val();
-    form_data['bidders'] = bidders;
-    form_data['analytics'] = analytics;
+    form_data['modules'] = bidders.concat(analytics);
+    form_data['version'] = version;
 
     return form_data;
 }
@@ -108,36 +181,49 @@ function get_form_data() {
 
 <div class="bs-docs-section" markdown="1">
 
-# Customize and Download Prebid.js <span class="label label-warning" style="font-size:14px">Beta</span>
+# Customize and Download Prebid.js
 
 {: .lead :}
 To improve the speed and load time of your site, build Prebid.js for only the header bidding partners you choose.
 
-### Option 1: Select header bidding partners
+### Option 1: Customize your download here
 
-{% assign bidder_pages = (site.pages | where: "layout", "bidder") %}
+{% assign bidder_pages = site.pages | where: "layout", "bidder" %}
+{% assign module_pages = site.pages | where: "nav_section", "modules" %}
+
+{: .alert.alert-danger :}
+**Deprecation Notice:** Legacy versions of Prebid.js (0.x) will be deprecated as of **September 27, 2018**. Prebid.org will no longer support any version of Prebid.js prior to version 1.0.
+
+{: .alert.alert-success :}
+Note: If you receive an error during download you most likely selected a configuration that is not supported. Verify that each bidder / module is available in the selected version.
 
 <form>
 <div class="row">
-<h4>Bidder Adapters</h4>
+<h4>Select Prebid Version</h4>
+<select id="version_selector" class="selectpicker">
+</select>
 
+
+<h4>Select Bidder Adapters</h4>
+<div class="adapters">
 {% for page in bidder_pages %}
   {% if page.s2s_only == true %}  
     {% continue %}
   {% endif %}
-<div class="col-md-4">
+<div class="col-md-4{% if page.prebid_1_0_supported %} prebid_1_0{% endif %}">
  <div class="checkbox">
   <label>
-  {% if page.aliasCode %} 
-    <input type="checkbox" bidderCode="{{ page.aliasCode }}" class="bidder-check-box"> {{ page.title }}
+  {% if page.aliasCode %}
+    <input type="checkbox" moduleCode="{{ page.aliasCode }}BidAdapter" class="bidder-check-box"> {{ page.title }}
   {% else %}
-    <input type="checkbox" bidderCode="{{ page.biddercode }}" class="bidder-check-box"> {{ page.title }}
+    <input type="checkbox" moduleCode="{{ page.biddercode }}BidAdapter" class="bidder-check-box"> {{ page.title }}
   {% endif %}
-      
+
     </label>
 </div>
 </div>
 {% endfor %}
+</div>
 </div>
 
 <br>
@@ -147,7 +233,7 @@ To improve the speed and load time of your site, build Prebid.js for only the he
 <div class="col-md-4">
   <div class="checkbox">
     <label>
-      <input type="checkbox" analyticscode="google" class="analytics-check-box"> Google Analtyics
+      <input type="checkbox" analyticscode="google" class="analytics-check-box"> Google Analytics
     </label>
   </div>
 </div>
@@ -192,15 +278,92 @@ To improve the speed and load time of your site, build Prebid.js for only the he
   </div>
 </div>
 
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="adomik" class="analytics-check-box"> Adomik Analytics
+    </label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="adxcg" class="analytics-check-box"> Adxcg Analytics
+    </label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="sigmoid" class="analytics-check-box"> Sigmoid Analytics
+    </label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="adkernelAdn" class="analytics-check-box"> Adkernel Analytics
+    </label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="eplanning" class="analytics-check-box"> Eplanning Analytics
+    </label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="realvu" class="analytics-check-box"> Realvu Analytics
+    </label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="vuble" class="analytics-check-box"> Vuble Analytics
+    </label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" analyticscode="yuktamedia" class="analytics-check-box"> yuktamedia Analytics
+    </label>
+  </div>
+</div>
+
+
 </div>
 <br/>
-<p>
-(Version 0.29.0)
-</p>
+<div class="row">
+ <h4>Modules</h4>
+ {% for page in module_pages %}
+  {% if page.enable_download == false %}  
+    {% continue %}
+  {% endif %}
+ <div class="col-md-4">
+ <div class="checkbox">
+  <label> <input type="checkbox" moduleCode="{{ page.module_code }}" class="bidder-check-box"> {{ page.display_name }}</label>
+</div>
+</div>
+ {% endfor %}
+</div>
+
+<br>
 
 <div class="form-group">
 
-  <button type="button" class="btn btn-lg btn-primary" data-toggle="modal" data-target="#myModal">Get Custom Prebid.js</button>
+  <button type="button" class="btn btn-lg btn-primary" data-toggle="modal" data-target="#myModal">Get Prebid.js! </button>
 
 </div>
 
@@ -224,7 +387,7 @@ To improve the speed and load time of your site, build Prebid.js for only the he
       <div class="modal-body">
 
         <div class="lead">
-          The download link will be in your inbox in a few minutes. Check the spam folder too!
+          Enter your information below to generate the download file.
         </div>
 
 
@@ -238,13 +401,13 @@ To improve the speed and load time of your site, build Prebid.js for only the he
         </div>
 
         <div class="form-group">
-            <button type="button" id="download-button" class="btn btn-lg btn-primary" onclick="submit_download()"><i class="glyphicon glyphicon-envelope"></i> Receive Prebid.js</button>
+            <button type="button" id="download-button" class="btn btn-lg btn-primary" onclick="submit_download()"><i class="glyphicon glyphicon-envelope"></i> Download Prebid.js</button>
         </div>
 
         <div class="alert alert-warning hide" role="alert" id="download-status"></div>
 
         <p>
-        Ran into problems? Email <code>info@prebid.org</code>
+        Ran into problems? Email <code>support@prebid.org</code>
         </p>
 
       </div>

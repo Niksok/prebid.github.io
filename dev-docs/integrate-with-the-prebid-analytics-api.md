@@ -119,14 +119,20 @@ Analytics adapter for Example.com. Contact prebid@example.com for information.
 
 #### Step 2: Add analytics source code
 
+{: .alert.alert-danger :}
+**Breaking changes for Prebid 1.0**  
+There are two breaking changes to the data emitted from analytic events for Prebid 1.0:  
+1. Events that previously emitted a `requestId` property now emit that data as the `auctionId` property  
+2. The `BID_TIMEOUT` event that previously emitted an array of bidder code strings now emits an array of objects containing `bidId`, `bidder`, `adUnitCode`, and `auctionId` for timed out bids  
+
+
 1. Create a JS file under `modules` with the name of the bidder suffixed with 'AnalyticsAdapter', e.g., `exAnalyticsAdapter.js`
 
 2. Create an analytics adapter to listen for Prebid events and call the analytics library or server. See the existing *AnalyticsAdapter.js files in the repo under [modules](https://github.com/prebid/Prebid.js/tree/master/modules).
 
-3. There are several types of analytics adapters. The example here focuses on the 'endpoint' type. See [AnalyticsAdapter.js](https://github.com/prebid/Prebid.js/blob/master/src/AnalyticsAdapter.js) for more info on the 'library' and 'bundle' types.
+3. There are two types of analytics adapters. The example here focuses on the 'endpoint' type. See [AnalyticsAdapter.js](https://github.com/prebid/Prebid.js/blob/master/src/AnalyticsAdapter.js) for more info on the 'bundle' type.
 
     * endpoint - Calls the specified URL on analytics events. Doesn't require a global context.
-    * library - The URL is considered to be a library to load. Expects a global context.
     * bundle - An advanced option expecting a global context.
 
 4. In order to get access to the configuration passed in from the page, the analytics
@@ -167,8 +173,6 @@ Analytics adapter best practices:
 
 + listen only to the events required
 + batch up calls to the backend for post-auction logging rather than calling immediately after each event.
-
-<a name="build-the-package"></a>
 
 ### Build the package
 
