@@ -17,10 +17,9 @@ The YOC VIS.X adaptor requires setup and approval from your YOC account manager 
 ### Bid params
 
 {: .table .table-bordered .table-striped }
-| Name        | Scope    | Description                                                                                                                                                                                                                                 | Example    | Type     |
-|-------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|----------|
-| `uid`       | required | The publisher's ad unit ID in VIS.X                                                                                                                                                                                                         | `'903536'` | `string` |
-| `priceType` | optional | The price type for received bids. Valid values are `'net'` or `'gross'`. Defaults to `'net'`. Net represents the header bid price with the header bidder margin already extracted. Gross price does contain the VIS.X bidder margin within. | `'net'`    | `string` |
+| Name        | Scope    | Description                         | Example    | Type     |
+|-------------|----------|-------------------------------------|------------|----------|
+| `uid`       | required | The publisher's ad unit ID in VIS.X | `'903536'` | `string` |
 
 ### Configuration
 
