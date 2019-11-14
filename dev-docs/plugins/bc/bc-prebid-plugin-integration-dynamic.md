@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: page_v2
 title: Dynamic Plugin Integration With Brightcove Player - On the Page
 description: Ad Unit Reference
 top_nav_section: dev_docs
@@ -7,7 +7,7 @@ nav_section: plugins
 pid: 10
 ---
 
-<div class="bs-docs-section" markdown="1">
+
 
 # Dynamic Plugin Integration With Brightcove Player - On the Page
 
@@ -29,7 +29,7 @@ Here is sample code for loading in the plugin and its constituents directly on t
 <!-- Load in the plugin css stylesheets -->
 <!-- This is usually done in the header -->
 <!-- You may need to modify these paths if you are using your own build -->
-<link href="https://acdn.adnxs.com/video/plugins/bc/vmap/bc_vpaid_vast_mo.css" rel="stylesheet">
+<link href="https://acdn.adnxs.com/video/plugins/css/mol/bc_vpaid_vast_mo.css" rel="stylesheet">
 <link href="https://acdn.adnxs.com/video/plugins/bc/prebid/bc_prebid_vast_vjs.css" rel="stylesheet">
 
 
@@ -86,7 +86,7 @@ Once the Brightcove Player has loaded, then publisher needs to call `renderAd()`
         };
     window.bc_plugin_pbjs.plugin_prebid_options.biddersSpec = params;
 
-    // set the DFP parameters (if you want to use DFP as your ad server)
+    // set the Google Ad Manager parameters (if you want to use Google Ad Manager as your ad server)
     // otherwise, remove this option
     var dfpParams = {
         params : {
@@ -192,7 +192,7 @@ To do this, the publisher must add code in the body of the document where the Br
         };
     plugin_options.biddersSpec = params;
 
-    // set the DFP Parameters (if want to use DFP as your ad server)
+    // set the Google Ad Manager Parameters (if want to use Google Ad Manager as your ad server)
     // otherwise, remove this option
     var dfpParams = {
         params : {
@@ -312,4 +312,4 @@ Details about the options supported by the Brightcove Prebid Plugin can be found
 
 - **[Sample Brightcove Player Prebid Plugin Integration - Publisher Uses Custom Header Bidding, Plugin Renders the Ad]({{site.baseurl}}/dev-docs/plugins/bc/bc-prebid-plugin-sample-custom-header-bidding.html)**
 
-</div>
+
