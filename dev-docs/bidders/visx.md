@@ -26,12 +26,32 @@ The YOC VIS.X adaptor requires setup and approval from your YOC account manager 
 ### Configuration
 
 The VIS.X adaptor has the ability to work in different currencies. Currently this adaptor supports `'EUR'`, `'USD'`, `'GBP'`, `'PLN'`. Defaults to `'EUR'`.
-
+If you would like to get bids in a currency different from EUR, you should make some settings. 
+​
+1. Set the Curreny module.
+http://prebid.org/dev-docs/modules/currency.html
+​
+​
+2. Setup the currency in Currency config.
+For example:
+​
 ```javascript
-$$PREBID_GLOBAL$$.setConfig({
-    currency: {
-        adServerCurrency: 'GBP'
+pbjs.setConfig({
+    "currency": {
+        "adServerCurrency": "GBP",
+	"bidderCurrencyDefault": {"visx": "USD"}
     }
 });
 ```
-Note: this currency config should correspond with your VIS.X account setting. Please reach out to your account manager for more information.
+​
+where:
+`"adServerCurrency"` - default currency for ad server.
+`"bidderCurrencyDefault"` - currency that is used for particular bidder. 
+​
+In example from the above for bids in USD the currency will be converted into GBP.
+​
+Take into account that:
+- If you set only `"adServerCurrency"` value - this default ad server value will be used for Visx adapter.
+- If you set no currency - the default prebid currency value will be used, it is EUR.
+- You should not set `"bidderCurrencyDefault"` parameter without `"adServerCurrency"` one.
+- Don't set unsupported currency values. If the currency is not from the list of supported currencies, the request will be rejected.
