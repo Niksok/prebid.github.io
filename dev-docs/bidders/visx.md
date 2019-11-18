@@ -26,37 +26,40 @@ The YOC VIS.X adaptor requires setup and approval from your YOC account manager 
 ### Configuration
 
 The VIS.X adaptor has the ability to work in different currencies. Currently this adaptor supports `'EUR'`, `'USD'`, `'GBP'`, `'PLN'`. Defaults to `'EUR'`.
-If your Ad Server uses EUR, you don't need any additional currency settings.
+If your Ad Server uses `EUR`, you don't need any additional currency settings.
 If you would like to trade with VisX in a currency different from EUR, you should implement some additional settings. 
 ​
 1. Download and configure the Prebid.js Currency module.
-http://prebid.org/dev-docs/modules/currency.html
-​
-​
+
+`http://prebid.org/dev-docs/modules/currency.html`
+
+
 2. Setup the currency in Currency config.
 ​
-a) If your Ad Server uses the currency from the list of VisX supported currencies (e.g. GPB), use the following settings:
+a) If your Ad Server uses the currency from the list of VisX supported currencies (e.g. `GPB`), use the following settings:
 ​
+```javascript
 pbjs.setConfig({
     "currency": {
         "adServerCurrency": "GBP",
     "bidderCurrencyDefault": {"visx": "GBP"}
     }
 });
+```
 ​
 ​
+b) If your Ad Server uses an unsupported currency for VisX (e.g. `JPY`), use the following settings:
 ​
-b) If your Ad Server uses an unsupported currency for VisX (e.g. JPY), use the following settings:
-​
+```javascript
 pbjs.setConfig({
     "currency": {
         "adServerCurrency": "JPY",
     "bidderCurrencyDefault": {"visx": "EUR"}
     }
 });
-​
+```
 ​
 Best practices:
 - Please make sure that currency module is set up and configured in order to trade with VisX in a currency that is not supported by VisX bidder.
-- You should set EUR in "bidderCurrencyDefault" parameter if you use unsupported currency for VisX.
+- You should set `EUR` in `"bidderCurrencyDefault"` parameter if you use unsupported currency for VisX.
 - Feel free to reach out to your contact at VisX if you need additional support setting up Prebid.js and currency config.
