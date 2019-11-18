@@ -26,32 +26,37 @@ The YOC VIS.X adaptor requires setup and approval from your YOC account manager 
 ### Configuration
 
 The VIS.X adaptor has the ability to work in different currencies. Currently this adaptor supports `'EUR'`, `'USD'`, `'GBP'`, `'PLN'`. Defaults to `'EUR'`.
-If you would like to get bids in a currency different from EUR, you should make some settings. 
+If your Ad Server uses EUR, you don't need any additional currency settings.
+If you would like to trade with VisX in a currency different from EUR, you should implement some additional settings. 
 ​
-1. Set the Curreny module.
+1. Download and configure the Prebid.js Currency module.
 http://prebid.org/dev-docs/modules/currency.html
 ​
 ​
 2. Setup the currency in Currency config.
-For example:
 ​
-```javascript
+a) If your Ad Server uses the currency from the list of VisX supported currencies (e.g. GPB), use the following settings:
+​
 pbjs.setConfig({
     "currency": {
         "adServerCurrency": "GBP",
-	"bidderCurrencyDefault": {"visx": "USD"}
+    "bidderCurrencyDefault": {"visx": "GBP"}
     }
 });
-```
 ​
-where:
-`"adServerCurrency"` - default currency for ad server.
-`"bidderCurrencyDefault"` - currency that is used for particular bidder. 
 ​
-In example from the above for bids in USD the currency will be converted into GBP.
 ​
-Take into account that:
-- If you set only `"adServerCurrency"` value - this default ad server value will be used for Visx adapter.
-- If you set no currency - the default prebid currency value will be used, it is EUR.
-- You should not set `"bidderCurrencyDefault"` parameter without `"adServerCurrency"` one.
-- Don't set unsupported currency values. If the currency is not from the list of supported currencies, the request will be rejected.
+b) If your Ad Server uses an unsupported currency for VisX (e.g. JPY), use the following settings:
+​
+pbjs.setConfig({
+    "currency": {
+        "adServerCurrency": "JPY",
+    "bidderCurrencyDefault": {"visx": "EUR"}
+    }
+});
+​
+​
+Best practices:
+- Please make sure that currency module is set up and configured in order to trade with VisX in a currency that is not supported by VisX bidder.
+- You should set EUR in "bidderCurrencyDefault" parameter if you use unsupported currency for VisX.
+- Feel free to reach out to your contact at VisX if you need additional support setting up Prebid.js and currency config.
